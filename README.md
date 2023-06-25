@@ -34,6 +34,8 @@ Usage is very simple and is as follows.
 
 Note: inix.parse takes a **file path**, not contents. Will most likely add another method for parsing raw data.
 
+The [CAMBER_RF] and [MIN] snippets below are referring to the ```Inix.Examples\\Data\\test.ini``` file. It is included in the repository so you can try it for yourself aswell.
+
 ```c#
 public Program()
 {
