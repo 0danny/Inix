@@ -4,6 +4,7 @@
     {
         public Program()
         {
+            //Enables or disables the logging, users choice.
             InixLogger.shouldLog = true;
 
             //Make new inix instance.
