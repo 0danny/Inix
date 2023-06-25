@@ -4,6 +4,8 @@
     {
         public Program()
         {
+            InixLogger.shouldLog = true;
+
             //Make new inix instance.
             InixLoader inix = new();
 
