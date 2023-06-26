@@ -63,6 +63,11 @@ namespace Inix
             set { inixObjects[cleanseKey(key)] = value; }
         }
 
+        public InixObject getComment(int commentNumber)
+        {
+            return inixObjects[$"Comment-{commentNumber}"];
+        }
+
         public override string ToString()
         {
             if (inixObjects.Count == 0)
@@ -86,7 +91,7 @@ namespace Inix
                     case InixType.Header:
 
                         //Ensure that we include any comments.
-                        string headerComment = (string.IsNullOrEmpty(objects.Value.rawData)) ? "" : " ;" + objects.Value.rawData;
+                        string headerComment = (string.IsNullOrEmpty(objects.Value.rawData)) ? "" : " ; " + objects.Value.rawData;
 
                         //Append the header title
                         returnObject.AppendLine($"{objects.Key}{headerComment}");
@@ -95,7 +100,7 @@ namespace Inix
                         foreach (KeyValuePair<string, InixProperty> properties in objects.Value.properties)
                         {
                             //Get the entire property string including comments.
-                            string property = $"{properties.Key}={properties.Value.value}" + (string.IsNullOrEmpty(properties.Value.comment) ? "" : " ;" + properties.Value.comment);
+                            string property = $"{properties.Key}={properties.Value.value}" + (string.IsNullOrEmpty(properties.Value.comment) ? "" : " ; " + properties.Value.comment);
 
                             returnObject.AppendLine(property);
                         }
@@ -159,9 +164,14 @@ namespace Inix
             }
         }
 
+        public int objectCount()
+        {
+            return inixObjects.Count();
+        }
+
         public bool containsHeader(string key)
         {
-            return inixObjects.ContainsKey(key);
+            return inixObjects.ContainsKey(cleanseKey(key));
         }
 
         private void parseLine(InixType type, string line)
@@ -177,7 +187,7 @@ namespace Inix
 
                     //InixLogger.log($"Processing -> [ {line} ], commentSplit: {commentSplit.Length} | propertySplit: {propertySplit.Length}");
 
-                    InixProperty property = new(propertySplit[1].Trim(), (commentSplit.Length > 1) ? commentSplit[1] : "");
+                    InixProperty property = new(propertySplit[1].Trim(), (commentSplit.Length > 1) ? commentSplit[1].Trim() : "");
 
                     //Get the last header and add it.
                     if (inixObjects.ContainsKey(lastHeader))
@@ -193,15 +203,16 @@ namespace Inix
                     //The idea is that we keep the brackets to avoid the names of comments interfering with header names.
                     //When they goto access the dictionary for e.g. Instance["someKey"], it will add brackets to the start and end
                     //We are taking advantage of insertion order here.
-                    lastHeader = line;
 
                     //Check if we have a ";"
                     string[] headerSplit = line.Split(';');
 
                     if (headerSplit.Length > 1)
                     {
-                        headerObject.rawData = headerSplit[1]; //If there is a header after the "]", then this will add it.
+                        headerObject.rawData = headerSplit[1].Trim(); //If there is a header after the "]", then this will add it.
                     }
+
+                    lastHeader = headerSplit[0].Trim();
 
                     inixObjects.Add(headerSplit[0].Trim(), headerObject);
 
@@ -225,7 +236,7 @@ namespace Inix
             }
         }
 
-        public void cleanup()
+        private void cleanup()
         {
             contents = null;
             commentCount = 0;

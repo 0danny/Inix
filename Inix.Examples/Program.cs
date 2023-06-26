@@ -4,6 +4,13 @@
     {
         public Program()
         {
+            Example1();
+
+            Console.ReadLine();
+        }
+
+        public void Example1()
+        {
             //Enables or disables the logging, users choice.
             InixLogger.shouldLog = true;
 
@@ -14,7 +21,7 @@
             bool result = inix.parse("Data\\test.ini");
 
             //If the parsing was successful.
-            if(result)
+            if (result)
             {
                 Console.WriteLine("The parsing was successful.");
 
@@ -42,7 +49,6 @@
                 Console.WriteLine("There was an error reading the INI file.");
             }
 
-            Console.ReadLine();
         }
 
         private static void Main(string[] args)

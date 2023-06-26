@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\custom.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\test.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
