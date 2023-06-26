@@ -5,11 +5,11 @@ A lightweight C# ini parser:
 - ~250 lines of code.
 - Pure C# code, only 1 import to use StringBuilder.
 
-This work is the result of a 3-4 hour session, it is not perfect and some edge cases are missing. Will be updating soon.
+It is not perfect and some edge cases are missing.
 
 ## Support
 
-The INI "standard" is a bit a skewed so I am going to stricly define below what is supported.
+Below defines what is supported by inix.
 
 ```ini
 ; global comments
@@ -28,7 +28,7 @@ I personally needed a highly customizable ini parser for the AssettoTools projec
 
 ## Usage
 
-Will be uploading a release in the coming days, currently if you would like to use it, you need to build the project. The usage is demonstrated below, however, there is an examples solution Inix.Examples that contains the same information.
+Will be uploading a release in the coming days, currently if you would like to use it, you need to build the project. The usage is demonstrated below, however, there is an examples solution ```Inix.Examples``` that contains the same information.
 
 Usage is very simple and is as follows.
 
