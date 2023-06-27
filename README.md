@@ -5,8 +5,6 @@ A lightweight C# ini parser:
 - ~250 lines of code.
 - Pure C# code, only 1 import to use StringBuilder.
 
-It is not perfect and some edge cases are missing.
-
 ## Support
 
 Below defines what is supported by inix.
@@ -36,8 +34,10 @@ Note: inix.parse takes a **file path**, not contents. Will most likely add anoth
 
 The [CAMBER_RF] and [MIN] snippets below are referring to the ```Inix.Examples\\Data\\test.ini``` file. It is included in the repository so you can try it for yourself aswell.
 
+The **InixLoader** is a class you only need to instantiate once, it contains all of the code needed to parse the INI file and return an **InixFile**. The **InixFile** is an object that houses all of the information regarding an INI file. All information sorrounding how to use the **InixFile** is listed below in the code snippet.
+
 ```c#
-public Program()
+public void Example1()
 {
     //Enables or disables the logging, users choice.
     InixLogger.shouldLog = true;
@@ -46,29 +46,29 @@ public Program()
     InixLoader inix = new();
 
     //Pass the path into inix and parse the INI file.
-    bool result = inix.parse("Data\\test.ini");
+    InixFile result = inix.parse("Data\\test.ini");
 
     //If the parsing was successful.
-    if (result)
+    if (!result.hasErrors)
     {
         Console.WriteLine("The parsing was successful.");
 
         //Print each header and comment of the dictionary
-        inix.printDictionary();
+        result.printDictionary();
 
         //Enumerating through the properties of a header.
-        foreach (KeyValuePair<string, InixProperty> keyVal in inix["[CAMBER_RF]"].properties)
+        foreach (KeyValuePair<string, InixProperty> keyVal in result["[CAMBER_RF]"].properties)
         {
             Console.WriteLine($"[{keyVal.Key}] -> {keyVal.Value.value} | Comment: {keyVal.Value.comment}");
         }
 
         //Print individual property out, testing [CAMBER_RF][MIN]
-        InixProperty propertyData = inix["[CAMBER_RF]"]["MIN"];
+        InixProperty propertyData = result["[CAMBER_RF]"]["MIN"];
 
         Console.WriteLine($"[MIN] -> {propertyData.value} -> {propertyData.comment}");
 
         //Reconstruct the ini
-        string reconstructed = inix.ToString();
+        string reconstructed = result.ToString();
 
         Console.WriteLine(reconstructed);
     }
@@ -76,8 +76,6 @@ public Program()
     {
         Console.WriteLine("There was an error reading the INI file.");
     }
-
-    Console.ReadLine();
 }
 ```
 
