@@ -27,12 +27,9 @@ I personally needed a highly customizable ini parser for the AssettoTools projec
 
 ## Usage
 
-Will be uploading a release in the coming days, currently if you would like to use it, you need to build the project. The usage is demonstrated below, however, there is an examples solution ```Inix.Examples``` that contains the same information.
-
-Usage is very simple and is as follows.
+The usage is demonstrated below, however, there is an examples solution ```Inix.Examples``` that contains the same information.
 
 Note: inix.parse takes a **file path**, not contents. Will most likely add another method for parsing raw data.
-
 The [CAMBER_RF] and [MIN] snippets below are referring to the ```Inix.Examples\\Data\\test.ini``` file. It is included in the repository so you can try it for yourself aswell.
 
 The **InixLoader** is a class you only need to instantiate once, it contains all of the code needed to parse the INI file and return an **InixFile**. The **InixFile** is an object that houses all of the information regarding an INI file. All information sorrounding how to use the **InixFile** is listed below in the code snippet.
