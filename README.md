@@ -5,6 +5,7 @@ A lightweight C# ini parser:
 - ~250 lines of code.
 - Pure C# code, only 1 import to use StringBuilder.
 - Built in **.NET 6.0**
+- 11KB in size.
 
 ## Support
 
