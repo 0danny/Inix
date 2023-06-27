@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Xml.Linq;
 
 namespace Inix
 {
@@ -14,53 +15,21 @@ namespace Inix
         public string comment { get; set; } = "";
     }
 
-    public class InixObject
+    public class InixFile
     {
-        public InixObject(InixType type)
+        public Dictionary<string, InixObject> inixObjects = new();
+
+        public List<string> errors = new();
+
+        public bool hasErrors
         {
-            this.type = type;
-
-            properties = new();
+            get => errors.Count > 0;
         }
-
-        public InixObject(InixType type, string rawData)
-        {
-            this.type = type;
-            this.rawData = rawData;
-        }
-
-        public InixType type { get; set; } = InixType.Comment;
-
-        public Dictionary<string, InixProperty>? properties { get; set; } = null;
-
-        public string rawData { get; set; } = "";
-
-        public InixProperty this[string key]
-        {
-            get { return properties[key]; }
-            set { properties[key] = value; }
-        }
-    }
-
-    public enum InixType
-    {
-        Property,
-        Header,
-        Comment
-    }
-
-    public class InixLoader
-    {
-        private string[]? contents = null;
-        private int commentCount = 0;
-        private string lastHeader = "";
-
-        private Dictionary<string, InixObject> inixObjects = new();
 
         public InixObject this[string key]
         {
-            get { return inixObjects[cleanseKey(key)]; }
-            set { inixObjects[cleanseKey(key)] = value; }
+            get => inixObjects[cleanseKey(key)];
+            set => inixObjects[cleanseKey(key)] = value;
         }
 
         public InixObject getComment(int commentNumber)
@@ -91,7 +60,7 @@ namespace Inix
                     case InixType.Header:
 
                         //Ensure that we include any comments.
-                        string headerComment = (string.IsNullOrEmpty(objects.Value.rawData)) ? "" : " ; " + objects.Value.rawData;
+                        string headerComment = (string.IsNullOrEmpty(objects.Value.comment)) ? "" : " ; " + objects.Value.comment;
 
                         //Append the header title
                         returnObject.AppendLine($"{objects.Key}{headerComment}");
@@ -112,7 +81,7 @@ namespace Inix
                     case InixType.Comment:
 
                         //Append the comments.
-                        returnObject.AppendLine(objects.Value.rawData);
+                        returnObject.AppendLine(objects.Value.comment);
                         returnObject.AppendLine("");
 
                         break;
@@ -131,7 +100,68 @@ namespace Inix
             return (containsBracket) ? key : string.Format("[{0}]", key);
         }
 
-        public bool parse(string path)
+        public int objectCount()
+        {
+            return inixObjects.Count();
+        }
+
+        public bool containsHeader(string key)
+        {
+            return inixObjects.ContainsKey(cleanseKey(key));
+        }
+
+        public void printDictionary()
+        {
+            foreach (KeyValuePair<string, InixObject> keyVal in inixObjects)
+            {
+                InixLogger.log($"{keyVal.Key} -> {keyVal.Value.type}");
+            }
+        }
+    }
+
+    public class InixObject
+    {
+        public InixObject(InixType type)
+        {
+            this.type = type;
+
+            properties = new();
+        }
+
+        public InixObject(InixType type, string comment)
+        {
+            this.type = type;
+            this.comment = comment;
+        }
+
+        public InixType type { get; set; } = InixType.Comment;
+
+        public Dictionary<string, InixProperty>? properties { get; set; } = null;
+
+        public string comment { get; set; } = "";
+
+        public InixProperty this[string key]
+        {
+            get => properties[key];
+            set => properties[key] = value;
+        }
+    }
+
+    public enum InixType
+    {
+        Property,
+        Header,
+        Comment
+    }
+
+    public class InixLoader
+    {
+        private string[]? contents = null;
+        private int commentCount = 0;
+        private string lastHeader = "";
+        private InixFile inixFile = new();
+
+        public InixFile parse(string path)
         {
             //Cleanup to ensure everything is empty.
             cleanup();
@@ -155,23 +185,9 @@ namespace Inix
                 }
 
                 InixLogger.log("Finished parsing the file.");
-
-                return true;
             }
-            else
-            {
-                return false;
-            }
-        }
 
-        public int objectCount()
-        {
-            return inixObjects.Count();
-        }
-
-        public bool containsHeader(string key)
-        {
-            return inixObjects.ContainsKey(cleanseKey(key));
+            return inixFile;
         }
 
         private void parseLine(InixType type, string line)
@@ -181,18 +197,25 @@ namespace Inix
                 case InixType.Property:
 
                     //Split property, value and comment.
-                    string[] commentSplit = line.Split(';');
+                    string[] commentSplit = line.Split(new[] { ';' }, 2);
 
-                    string[] propertySplit = commentSplit[0].Split('=');
+                    string[] propertySplit = commentSplit[0].Split(new[] { '=' }, 2);
 
-                    //InixLogger.log($"Processing -> [ {line} ], commentSplit: {commentSplit.Length} | propertySplit: {propertySplit.Length}");
-
-                    InixProperty property = new(propertySplit[1].Trim(), (commentSplit.Length > 1) ? commentSplit[1].Trim() : "");
-
-                    //Get the last header and add it.
-                    if (inixObjects.ContainsKey(lastHeader))
+                    if(propertySplit.Length != 2)
                     {
-                        inixObjects[lastHeader].properties.Add(propertySplit[0], property);
+                        inixFile.errors.Add($"There was an error parsing the property - [{line}] {propertySplit.Length}");
+                    }
+                    else
+                    {
+                        //InixLogger.log($"Processing -> [ {line} ], commentSplit: {commentSplit.Length} | propertySplit: {propertySplit.Length}");
+
+                        InixProperty property = new(propertySplit[1].Trim(), (commentSplit.Length > 1) ? commentSplit[1].Trim() : "");
+
+                        //Get the last header and add it.
+                        if (inixFile.inixObjects.ContainsKey(lastHeader))
+                        {
+                            inixFile.inixObjects[lastHeader].properties.Add(propertySplit[0], property);
+                        }
                     }
 
                     break;
@@ -205,16 +228,25 @@ namespace Inix
                     //We are taking advantage of insertion order here.
 
                     //Check if we have a ";"
-                    string[] headerSplit = line.Split(';');
+                    string[] headerSplit = line.Split(new[] { ';' }, 2);
 
                     if (headerSplit.Length > 1)
                     {
-                        headerObject.rawData = headerSplit[1].Trim(); //If there is a header after the "]", then this will add it.
+                        headerObject.comment = headerSplit[1].Trim(); //If there is a header after the "]", then this will add it.
                     }
 
-                    lastHeader = headerSplit[0].Trim();
+                    string header = headerSplit[0].Trim();
 
-                    inixObjects.Add(headerSplit[0].Trim(), headerObject);
+                    if (header[header.Length - 1] != ']')
+                    {
+                        inixFile.errors.Add($"There was an error parsing header - {header} -> It is missing a closing bracket.");
+                    }
+                    else
+                    {
+                        lastHeader = header;
+
+                        inixFile.inixObjects.Add(header, headerObject);
+                    }
 
                     break;
                 case InixType.Comment:
@@ -222,17 +254,9 @@ namespace Inix
                     //Increment the comment count.
                     commentCount++;
 
-                    inixObjects.Add($"Comment-{commentCount}", new InixObject(type, line));
+                    inixFile.inixObjects.Add($"Comment-{commentCount}", new InixObject(type, line));
 
                     break;
-            }
-        }
-
-        public void printDictionary()
-        {
-            foreach (KeyValuePair<string, InixObject> keyVal in inixObjects)
-            {
-                InixLogger.log($"{keyVal.Key} -> {keyVal.Value.type}");
             }
         }
 
@@ -242,8 +266,8 @@ namespace Inix
             commentCount = 0;
             lastHeader = "";
 
-            if (inixObjects.Count > 0)
-                inixObjects.Clear();
+            if (inixFile != null)
+                inixFile = new();
         }
 
         private InixType detectType(char firstChar)
@@ -259,10 +283,10 @@ namespace Inix
                 //Normal Comment
                 case ';':
                     return InixType.Comment;
+                //If anything else, it is a property.
+                default:
+                    return InixType.Property;
             }
-
-            //If anything else, it is a property.
-            return InixType.Property;
         }
 
         private void loadFile(string path)
@@ -277,6 +301,8 @@ namespace Inix
             }
             catch (Exception ex)
             {
+                inixFile.errors.Add($"There was an error reading the file - {ex.Message}");
+
                 InixLogger.log($"Error reading lines of file - {ex.Message}");
             }
         }
